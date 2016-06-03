@@ -7,10 +7,10 @@ Created on Mon May 23 21:45:20 2016
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-
+from nlib import MCEngine
 #We are simulating for a minute
 
-def sim_once(time = 60, n = 1000):
+def sim_once(time = 60, n = 1000): #simulate for a minute
     node_state = [True]*n #Wether or not the nodes are ready to process request
     nodeTimer = [0]*n #If the nodes are processing, how long they are going to process
     timer = 0
@@ -28,13 +28,13 @@ def sim_once(time = 60, n = 1000):
         node_state = [True if i == 0 else False for i in nodeTimer] #for such nodes, we set their state as True again
         try:
             nodeAssigned = node_state.index(True)
-            nodeTimer[nodeAssigned] = time + 2/(random.uniform(0,1)**(1/3)) #in absolute terms the time take to process
+            nodeTimer[nodeAssigned] = time + 2/(random.uniform(0,1)**(1/3)) #alpha = 3 and X_m = 2. In absolute terms the time take to process
             node_state[nodeAssigned] = False #set the state of that node to false
             successes += 1
         except:
             drops += 1
             continue
-    serverCost = n*float(20/(30*24*3600))*time
+    serverCost = n*float(2000/(30*24*3600))*time
     profit = successes*0.01 - drops*0.1 - serverCost
     return profit, successes, drops, totalRequests
     
@@ -56,12 +56,12 @@ count = 0
 for node in nodes:
     count += 1
     #print(node)    
-    results.append(sim_many(number = 1, time = 600, n = node))
+    results.append(sim_once(time = 60, n = node))
     
 matrix = np.array(results)
 plt.figure()
 plt.scatter(matrix[:,0],matrix[:,2])
-plt.title('with 600 sec')
+plt.title('with 60 sec')
 #plt.ylim(ymin = 0); plt.xlim(xmin=600, xmax=700)
 
 #from scipy.interpolate import spline
