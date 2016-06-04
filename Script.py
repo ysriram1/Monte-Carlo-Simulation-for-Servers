@@ -48,6 +48,7 @@ def sim_many(number = 100, time = 60, n = 100): #We repeat the above simulation 
     errorProfit = np.std(profitValues)/np.sqrt(number) #This is the error in profit
     return n, time, averageProfit, errorProfit
     
+    
 
 
 #The function below is used to visualize how the the profit varies with node count
@@ -66,6 +67,11 @@ def profit_nodePlot(minN = 10, maxN = 1000, iterations = 1, time = 60):
     matrix = np.array(results)
     plt.figure()
     plt.scatter(matrix[:,0],matrix[:,2])
-    plt.title('with %i sec'%time)
+    plt.title('processing time of %i seconds'%time)
+    plt.xlabel('Number of Servers')
+    plt.ylabel('Profit($)')
+    plt.show()
 
-    
+
+for time in range(10, 250, 20):
+    profit_nodePlot(time = time)
