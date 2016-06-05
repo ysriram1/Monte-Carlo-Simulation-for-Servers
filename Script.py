@@ -7,13 +7,15 @@ Created on Mon May 23 21:45:20 2016
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-from nlib import MCEngine
-
 
 
 #We are simulating for a minute
 
 def sim_once(time = 60, n = 1000): #simulate for a minute
+    '''This function takes a time period to simulate for and the number of nodes
+    and returns the profit, number of successful requests, number of dropped 
+    requests, and total number of requests for that simulation.
+    '''
     nodeTimer = [0]*n #If the nodes are processing, how long they are going to process
     timer = 0
     requestTimeLst = []
@@ -29,12 +31,12 @@ def sim_once(time = 60, n = 1000): #simulate for a minute
         nodeTimer = [0 if i < time_exp else i for i in nodeTimer] #If any of the nodes with processing time with lower than current time, we set it back to 0
         try:
             nodeAssigned = nodeTimer.index(0)
-            nodeTimer[nodeAssigned] = time_exp + 2/(random.uniform(0,1)**(1/3)) #alpha = 3 and X_m = 2. In absolute terms the time take to process
+            nodeTimer[nodeAssigned] = time_exp + 2./(random.uniform(0,1)**(1./3)) #alpha = 3 and X_m = 2. In absolute terms the time take to process
             successes += 1
         except:
             drops += 1
             continue
-    serverCost = n*float(2000/(30.*24*3600))*time
+    serverCost = n*float(2000./(30.*24*3600))*time
     profit = successes*0.01 - drops*0.1 - serverCost
     return profit, successes, drops, totalRequests
 
@@ -42,36 +44,68 @@ def sim_once(time = 60, n = 1000): #simulate for a minute
 
 #We simulate the process many times and report the 95% CI using bootstraping
 
-def sim_many(number = 100, time = 60, n = 100): #We repeat the above simulation a specified number of times
-    profitValues =[sim_once(time = time, n = n)[0] for i in range(number)]
-    averageProfit = np.mean(profitValues) #the is the average profit
-    errorProfit = np.std(profitValues)/np.sqrt(number) #This is the error in profit
-    return n, time, averageProfit, errorProfit
-    
-    
+def sim_many(number = 100, time = 60, n = 100, bootstrapCI = False): #We repeat the above simulation a specified number of times
+    '''This function repeats the simulate_once() function a specified number of 
+    times and returns the 95% CI of the number of successes, profit, and requests
+    via bootstrapping.
+    '''    
+    allResults =[sim_once(time = time, n = n) for i in range(number)]
+    profitValues = [x[0] for x in allResults]
+    successes = [x[1] for x in allResults]
+    requests = [x[3] for x in allResults]
+    meanSuccesses = np.mean(successes)
+    meanRequests = np.mean(requests)
+    meanProfit = np.mean(profitValues) #the is the average profit
+    if bootstrapCI: #95% CI via bootstraping
+        profit_05, profit_95 = np.sort(profitValues)[int(0.05*len(profitValues))], profitValues[int(0.95*len(profitValues))]
+        success_05, success_95  = np.sort(successes)[int(0.05*len(successes))], successes[int(0.95*len(successes))]
+        requests_05, requests_95  = np.sort(requests)[int(0.05*len(requests))], requests[int(0.95*len(requests))]
+        return profit_05, profit_95, success_05, success_95, requests_05, requests_95
+    else:
+        return meanProfit, meanSuccesses, meanRequests 
 
 
 #The function below is used to visualize how the the profit varies with node count
 
-def profit_nodePlot(minN = 10, maxN = 1000, iterations = 1, time = 60):
+def plots_profit_success(minN = 10, maxN = 1000, iterations = 1, time = 60):
+    '''This function takes values for the minimum number of servers, maximum number of 
+    servers, the necessary simulation time, and the number of iterations, and returns 
+    a plot showing the variation in the profit with changing number of servers and the 
+    variation of the % of requests processed with the increase in the number of servers 
+    used.
+    '''    
     
     nodes = list(range(minN,maxN,10))
     results= []
     count = 0
-    
     for node in nodes:
         count += 1
         #print(node)    
         results.append(sim_many(number = iterations, time = time, n = node))
-        
-    matrix = np.array(results)
+    
+    results = np.array(results)
     plt.figure()
-    plt.scatter(matrix[:,0],matrix[:,2])
-    plt.title('processing time of %i seconds'%time)
-    plt.xlabel('Number of Servers')
-    plt.ylabel('Profit($)')
-    plt.show()
+    plt.scatter(np.array(nodes), results[:,0])
+    plt.title('Processing time of %i seconds (profit earned)'%time); plt.xlabel('Number of Servers'); plt.ylabel('Profit($)')
+    plt.xlim(0); plt.show()
+        
+    plt.figure()
+    plt.scatter(np.array(nodes),100*(results[:,1]/results[:,2]))
+    plt.title('Processing time of %i seconds (requests processed)'%time); plt.xlabel('Number of Servers'); plt.ylabel('% of requests processed')
+    plt.xlim(0); plt.ylim(0);plt.show()
 
 
-for time in range(10, 250, 20):
-    profit_nodePlot(time = time)
+
+
+for time in range(10, 250, 40): #This will generate the necessary graphs for different time periods
+    plots_profit_success(time = time)
+
+
+#This will generate the 95% CIs via bootstrapping for a 60 seconds simulation with 330 nodes  
+sim_many(number = 100, time = 60, n = 330, bootstrapCI = True)
+
+#This will generate the 95% CIs via bootstrapping for a 60 seconds simulation with 290 nodes  
+sim_many(number = 100, time = 60, n = 330, bootstrapCI = True)
+
+#This will generate the 95% CIs via bootstrapping for a 60 seconds simulation with 285 nodes  
+sim_many(number = 100, time = 60, n = 330, bootstrapCI = True)
