@@ -117,7 +117,7 @@ for time in range(10, 250, 40): #This will generate the necessary graphs for dif
 
 
 #This will generate the 95% CIs via bootstrapping for a 60 seconds simulation with 330 nodes. For max profit
-sim_many(number = 100, time = 60, nodes = 330, bootstrapCI = True)
+sim_many(number = 100, time = 60, nodes = 345, bootstrapCI = True)
 
 #This will generate the 95% CIs via bootstrapping for a 60 seconds simulation with 290 nodes. For breakeven 
 sim_many(number = 100, time = 60, nodes = 286, bootstrapCI = True)
