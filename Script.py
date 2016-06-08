@@ -58,27 +58,24 @@ def sim_many(number = 100, time = 60, nodes = 100, bootstrapCI = False): #We rep
     profitValues_rs = [mean(resample(profitValues)) for i in range(len(profitValues))]
     
     successes = [float(x[1]) for x in allResults]
-    #successes_rs = [mean(resample(successes)) for i in range(len(successes))]
-    
     requests = [float(x[3]) for x in allResults]
-    #requests_rs = [mean(resample(requests)) for i in range(len(requests))]
-    
+   
     request_success = list(np.array(successes)/np.array(requests))
     request_success_rs = [mean(resample(request_success)) for i in range(len(request_success))]
 
-    meanSuccesses = np.mean(successes)
-    meanRequests = np.mean(requests)
+    meanSuccessRate = np.mean(request_success)
     meanProfit = np.mean(profitValues) #the is the average profit
+    
     if bootstrapCI: #95% CI via bootstraping
-        profit_025, profit_975 = np.sort(profitValues_rs)[int(0.025*len(profitValues_rs))], np.sort(profitValues_rs)[int(0.975*len(profitValues_rs))]
-        #success_025, success_975  = np.sort(successes_rs)[int(0.025*len(successes_rs))], np.sort(successes_rs)[int(0.975*len(successes_rs))]
-        #requests_025, requests_975  = np.sort(requests_rs)[int(0.025*len(requests_rs))], np.sort(requests_rs)[int(0.975*len(requests_rs))]
+        profit_025= np.sort(profitValues_rs)[int(0.025*len(profitValues_rs))] 
+        profit_975  = np.sort(profitValues_rs)[int(0.975*len(profitValues_rs))]
         request_success_025  = np.sort(request_success_rs)[int(0.025*len(request_success_rs))] 
         request_success_975 = np.sort(request_success_rs)[int(0.975*len(request_success_rs))]
+        
+        return profit_025, meanProfit, profit_975, request_success_025, meanSuccessRate, request_success_975
 
-        return profit_025, profit_975, request_success_025, request_success_975
     else:
-        return meanProfit, meanSuccesses, meanRequests 
+        return meanProfit, meanSuccessRate 
 
 
 #The function below is used to visualize how the the profit varies with node count
@@ -105,7 +102,7 @@ def plots_profit_success(minN = 10, maxN = 1000, iterations = 1, time = 60):
     plt.xlim(0); plt.show()
         
     plt.figure()
-    plt.scatter(np.array(node_count),100*(results[:,1]/results[:,2]))#NOTE: dividing here or in the sim_many function itself wont make a difference if we are constructing graphs with only one iteration
+    plt.scatter(np.array(node_count),100*(results[:,1]))#NOTE: dividing here or in the sim_many function itself wont make a difference if we are constructing graphs with only one iteration
     plt.title('Processing time of %i seconds (requests processed)'%time); plt.xlabel('Number of Servers'); plt.ylabel('% of requests processed')
     plt.xlim(0); plt.ylim(0);plt.show()
 
@@ -116,11 +113,26 @@ for time in range(10, 250, 40): #This will generate the necessary graphs for dif
     plots_profit_success(time = time)
 
 
-#This will generate the 95% CIs via bootstrapping for a 60 seconds simulation with 330 nodes. For max profit
-sim_many(number = 100, time = 60, nodes = 345, bootstrapCI = True)
+#This will generate the 95% CIs via bootstrapping for a 60 seconds simulation with 340 nodes. For max profit
+profitMean = []
+profit975 = []
+profit025 = []
+nodeValues = [330, 345, 380, 425, 490]#We will be plotting at these values
 
-#This will generate the 95% CIs via bootstrapping for a 60 seconds simulation with 290 nodes. For breakeven 
+
+for node in nodeValues:
+    results = sim_many(number = 100, time = 60, nodes = node, bootstrapCI= True)
+    profitMean.append(results[1]); profit975.append(results[2]); profit025.append(results[0])
+
+fig, ax= plt.subplots()
+#ax.plot(nodeValues, profitMean, color='black')
+ax.plot(nodeValues, profit025, color='yellow')  
+ax.plot(nodeValues, profit025, color='green')   
+
+#This will generate the 95% CIs via bootstrapping for a 60 seconds simulation with 286 nodes. For breakeven 
 sim_many(number = 100, time = 60, nodes = 286, bootstrapCI = True)
 
-#This will generate the 95% CIs via bootstrapping for a 60 seconds simulation with 285 nodes. For 90% success  
+#This will generate the 95% CIs via bootstrapping for a 60 seconds simulation with 275 nodes. For 90% success  
 sim_many(number = 100, time = 60, nodes = 275, bootstrapCI = True)
+
+
