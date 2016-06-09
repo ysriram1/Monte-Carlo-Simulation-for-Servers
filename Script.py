@@ -187,6 +187,9 @@ def bootstrap(x, confidence=0.68, nsamples=100):
     return means[left_tail], mean(x), means[right_tail]
     
 
+import os
+os.chdir('/Users/Sriram/Desktop/DePaul/Q3/CSC521')
+
 profitMean = []
 profit975 = []
 profit025 = []
@@ -197,7 +200,7 @@ for node in nodeValues:
     profitMean.append(results[1]); profit975.append(results[2]); profit025.append(results[0])
 
 df = pd.DataFrame({'Number of Servers':nodeValues, 'Mean Profit ($)':profitMean})
-
+df.to_csv('./maxProfit.csv')
 
 profitMean = []
 profit975 = []
@@ -209,6 +212,8 @@ for node in nodeValues:
     profitMean.append(results[1]); profit975.append(results[2]); profit025.append(results[0])
 
 df = pd.DataFrame({'Number of Servers':nodeValues, 'Mean Profit ($)':profitMean})
+df.to_csv('./breakEven.csv')
+
 
 successMean = []
 success975 = []
@@ -220,3 +225,4 @@ for node in nodeValues:
     successMean.append(results[4]); success975.append(results[5]); success025.append(results[3])
 
 df = pd.DataFrame({'Number of Servers':nodeValues, 'Mean Profit ($)':successMean})
+df.to_csv('./successRate.csv')
