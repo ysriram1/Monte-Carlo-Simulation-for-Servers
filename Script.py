@@ -5,9 +5,9 @@ Created on Mon May 23 21:45:20 2016
 @author: Sriram
 """
 import random
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
 
 #We are simulating for a minute
 
@@ -20,7 +20,7 @@ def sim_once(time = 60, n = 1000): #simulate for a minute
     timer = 0
     requestTimeLst = []
     while True: #this will create a list of times when a single node is expected recieve a request
-        timer += random.expovariate(100)#This is the time intervals between each request 
+        timer += random .expovariate(100)#This is the time intervals between each request 
         if timer > time:
             break
         requestTimeLst.append(timer)
@@ -41,18 +41,18 @@ def sim_once(time = 60, n = 1000): #simulate for a minute
     return profit, successes, drops, totalRequests
 
 
-
 #We simulate the process many times and report the 95% CI using bootstraping
 
-def sim_many(number = 100, time = 60, nodes = 100, bootstrapCI = False): #We repeat the above simulation a specified number of times
+def sim_many(number = 100, time = 60, nodes = 100, bootstrapCI = True, CI = 0.95): #We repeat the above simulation a specified number of times
     '''This function repeats the simulate_once() function a specified number of 
     times and returns the 95% CI of the number of successes, profit, and requests
     via bootstrapping.
     '''    
+    global allResults    
     allResults =[sim_once(time = time, n = nodes) for i in range(number)]
 
     def mean(S): return float(sum(x for x in S))/len(S)
-    def resample(S): return [random.choice(S) for i in xrange(len(S))]
+    def resample(S): return [random.choice(S) for i in range(len(S))]
         
     profitValues = [x[0] for x in allResults] 
     profitValues_rs = [mean(resample(profitValues)) for i in range(len(profitValues))]
@@ -65,14 +65,16 @@ def sim_many(number = 100, time = 60, nodes = 100, bootstrapCI = False): #We rep
 
     meanSuccessRate = np.mean(request_success)
     meanProfit = np.mean(profitValues) #the is the average profit
+    left_tail = int(((1.0-CI)/2)*number)
+    right_tail = number-1-left_tail  
     
     if bootstrapCI: #95% CI via bootstraping
-        profit_025= np.sort(profitValues_rs)[int(0.025*len(profitValues_rs))] 
-        profit_975  = np.sort(profitValues_rs)[int(0.975*len(profitValues_rs))]
-        request_success_025  = np.sort(request_success_rs)[int(0.025*len(request_success_rs))] 
-        request_success_975 = np.sort(request_success_rs)[int(0.975*len(request_success_rs))]
+        profit_left= np.sort(profitValues_rs)[left_tail] 
+        profit_right  = np.sort(profitValues_rs)[right_tail]
+        request_success_left  = np.sort(request_success_rs)[left_tail] 
+        request_success_right = np.sort(request_success_rs)[right_tail]
         
-        return profit_025, meanProfit, profit_975, request_success_025, meanSuccessRate, request_success_975
+        return profit_left, meanProfit, profit_right, request_success_left, meanSuccessRate, request_success_right
 
     else:
         return meanProfit, meanSuccessRate 
@@ -113,26 +115,108 @@ for time in range(10, 250, 40): #This will generate the necessary graphs for dif
     plots_profit_success(time = time)
 
 
-#This will generate the 95% CIs via bootstrapping for a 60 seconds simulation with 340 nodes. For max profit
+#This will generate the 95% CIs via bootstrapping for a 60 seconds simulation with 345 nodes for max profit
 profitMean = []
 profit975 = []
 profit025 = []
-nodeValues = [330, 345, 380, 425, 490]#We will be plotting at these values
-
+nodeValues = [330, 345, 355, 375, 400, 415, 425]#We will be plotting at these values
 
 for node in nodeValues:
     results = sim_many(number = 100, time = 60, nodes = node, bootstrapCI= True)
     profitMean.append(results[1]); profit975.append(results[2]); profit025.append(results[0])
 
 fig, ax= plt.subplots()
-#ax.plot(nodeValues, profitMean, color='black')
-ax.plot(nodeValues, profit025, color='yellow')  
-ax.plot(nodeValues, profit025, color='green')   
+ax.plot(nodeValues, profitMean, color='black', label = 'Mean')
+ax.plot(nodeValues, profit025, color='yellow', label = 'lower bound')  
+ax.plot(nodeValues, profit975, color='green', label = 'upper bound')   
+plt.xlabel('Number of servers'); plt.ylabel('Profit ($)')
+plt.title('The variation of profit with nodes using 95% CI for 60s simulation')
+plt.legend()
 
-#This will generate the 95% CIs via bootstrapping for a 60 seconds simulation with 286 nodes. For breakeven 
-sim_many(number = 100, time = 60, nodes = 286, bootstrapCI = True)
+#This will generate the 95% CIs via bootstrapping for a 60 seconds simulation with 345 nodes for breakeven
 
-#This will generate the 95% CIs via bootstrapping for a 60 seconds simulation with 275 nodes. For 90% success  
-sim_many(number = 100, time = 60, nodes = 275, bootstrapCI = True)
+profitMean = []
+profit975 = []
+profit025 = []
+nodeValues = [250, 260, 285, 290, 300]#We will be plotting at these values
+
+for node in nodeValues:
+    results = sim_many(number = 100, time = 60, nodes = node, bootstrapCI= True)
+    profitMean.append(results[1]); profit975.append(results[2]); profit025.append(results[0])
+
+fig, ax= plt.subplots()
+ax.plot(nodeValues, profitMean, color='black', label = 'Mean')
+ax.plot(nodeValues, profit025, color='yellow', label = 'lower bound')  
+ax.plot(nodeValues, profit975, color='green', label = 'upper bound')   
+plt.xlabel('Number of servers'); plt.ylabel('Profit ($)'); plt.ylim(ymin = -60)
+plt.title('The variation of profit with nodes using 95% CI for 60s simulation')
+plt.legend()
+
+#This will generate the 95% CIs via bootstrapping for a 60 seconds simulation with 275 nodes for breakeven
+
+successMean = []
+success975 = []
+success025 = []
+nodeValues = [250, 260, 275, 285, 290, 300]#We will be plotting at these values
+
+for node in nodeValues:
+    results = sim_many(number = 100, time = 60, nodes = node, bootstrapCI= True)
+    successMean.append(results[4]); success975.append(results[5]); success025.append(results[3])
+
+fig, ax= plt.subplots()
+ax.plot(nodeValues, successMean, color='black', label = 'Mean')
+ax.plot(nodeValues, success025, color='yellow', label = 'lower bound')  
+ax.plot(nodeValues, success975, color='green', label = 'upper bound')   
+plt.xlabel('Number of servers'); plt.ylabel('Success %')
+plt.title('The variation of success rate with nodes using 95% CI for 60s simulation')
+plt.legend()
 
 
+
+###############################################
+def resample(S):
+    return [random.choice(S) for i in range(len(S))]
+
+def bootstrap(x, confidence=0.68, nsamples=100):
+    """Computes the bootstrap errors of the input list."""
+    def mean(S): return float(sum([x for x in S]))/len(S)
+    means = [mean(resample(x)) for k in range(nsamples)]
+    means.sort()
+    left_tail = int(((1.0-confidence)/2)*nsamples)
+    right_tail = nsamples-1-left_tail
+    return means[left_tail], mean(x), means[right_tail]
+    
+
+profitMean = []
+profit975 = []
+profit025 = []
+nodeValues = [340, 341, 342, 343, 344, 345, 346, 347,348, 349, 350]#We will be plotting at these values
+
+for node in nodeValues:
+    results = sim_many(number = 100, time = 60, nodes = node, bootstrapCI= True)
+    profitMean.append(results[1]); profit975.append(results[2]); profit025.append(results[0])
+
+df = pd.DataFrame({'Number of Servers':nodeValues, 'Mean Profit ($)':profitMean})
+
+
+profitMean = []
+profit975 = []
+profit025 = []
+nodeValues = [280, 381, 382, 383, 384, 385, 386, 387,388, 389, 380]#We will be plotting at these values
+
+for node in nodeValues:
+    results = sim_many(number = 100, time = 60, nodes = node, bootstrapCI= True)
+    profitMean.append(results[1]); profit975.append(results[2]); profit025.append(results[0])
+
+df = pd.DataFrame({'Number of Servers':nodeValues, 'Mean Profit ($)':profitMean})
+
+successMean = []
+success975 = []
+success025 = []
+nodeValues = [270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280]#We will be plotting at these values
+
+for node in nodeValues:
+    results = sim_many(number = 100, time = 60, nodes = node, bootstrapCI= True)
+    successMean.append(results[4]); success975.append(results[5]); success025.append(results[3])
+
+df = pd.DataFrame({'Number of Servers':nodeValues, 'Mean Profit ($)':successMean})
