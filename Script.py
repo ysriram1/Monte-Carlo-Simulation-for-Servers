@@ -73,13 +73,13 @@ def sim_many(number = 100, time = 60, nodes = 100, bootstrapCI = True, CI = 0.95
         profit_right  = np.sort(profitValues_rs)[right_tail]
         request_success_left  = np.sort(request_success_rs)[left_tail] 
         request_success_right = np.sort(request_success_rs)[right_tail]
-        
         return profit_left, meanProfit, profit_right, request_success_left, meanSuccessRate, request_success_right
 
     else:
         return meanProfit, meanSuccessRate 
 
 
+#############################################################################################################
 #The function below is used to visualize how the the profit varies with node count
 
 def plots_profit_success(minN = 10, maxN = 1000, iterations = 1, time = 60):
@@ -115,6 +115,8 @@ for time in range(10, 250, 40): #This will generate the necessary graphs for dif
     plots_profit_success(time = time)
 
 
+
+#############################################################################################################
 #This will generate the 95% CIs via bootstrapping for a 60 seconds simulation with 345 nodes for max profit
 profitMean = []
 profit975 = []
@@ -170,23 +172,8 @@ ax.plot(nodeValues, success975, color='green', label = 'upper bound')
 plt.xlabel('Number of servers'); plt.ylabel('Success %')
 plt.title('The variation of success rate with nodes using 95% CI for 60s simulation')
 plt.legend()
-
-
-
-###############################################
-def resample(S):
-    return [random.choice(S) for i in range(len(S))]
-
-def bootstrap(x, confidence=0.68, nsamples=100):
-    """Computes the bootstrap errors of the input list."""
-    def mean(S): return float(sum([x for x in S]))/len(S)
-    means = [mean(resample(x)) for k in range(nsamples)]
-    means.sort()
-    left_tail = int(((1.0-confidence)/2)*nsamples)
-    right_tail = nsamples-1-left_tail
-    return means[left_tail], mean(x), means[right_tail]
-    
-
+  
+###################################################################################################
 import os
 os.chdir('/Users/Sriram/Desktop/DePaul/Q3/CSC521')
 
@@ -226,3 +213,20 @@ for node in nodeValues:
 
 df = pd.DataFrame({'Number of Servers':nodeValues, 'Mean Profit ($)':successMean})
 df.to_csv('./successRate.csv')
+
+###################################################################################################
+profitMean = []
+profit975 = []
+profit025 = []
+times = list(range(20, 400, 20))
+for time in times:
+    results = sim_many(number = 100, time = time, nodes = 345, bootstrapCI= True)
+    profitMean.append(results[1]); profit975.append(results[2]); profit025.append(results[0])
+fig, ax= plt.subplots()
+ax.plot(times, profitMean, color='black', label = 'Mean')
+ax.plot(times, profit025, color='yellow', label = 'lower bound')  
+ax.plot(times, profit975, color='green', label = 'upper bound')   
+plt.xlabel('Simulation Time (s)'); plt.ylabel('Profit ($)')
+plt.title('The variation of profit with time using 95% CI for 345 nodes')
+plt.legend()
+
