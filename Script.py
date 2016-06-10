@@ -215,18 +215,23 @@ df = pd.DataFrame({'Number of Servers':nodeValues, 'Mean Profit ($)':successMean
 df.to_csv('./successRate.csv')
 
 ###################################################################################################
+sim_many(number = 100, time = 60, nodes = 286, bootstrapCI= True) #CI for breakeven
+sim_many(number = 100, time = 60, nodes = 345, bootstrapCI= True) #CI for max profit
+sim_many(number = 100, time = 60, nodes = 275, bootstrapCI= True) #CI for %requests processed
+
+###################################################################################################
 profitMean = []
 profit975 = []
 profit025 = []
-times = list(range(20, 400, 20))
+times = list(range(40, 400, 20))
 for time in times:
-    results = sim_many(number = 100, time = time, nodes = 345, bootstrapCI= True)
-    profitMean.append(results[1]); profit975.append(results[2]); profit025.append(results[0])
+    results = sim_many(number = 100, time = time, nodes = 275, bootstrapCI= True)
+    profitMean.append(results[4]); profit975.append(results[5]); profit025.append(results[3])
 fig, ax= plt.subplots()
 ax.plot(times, profitMean, color='black', label = 'Mean')
 ax.plot(times, profit025, color='yellow', label = 'lower bound')  
 ax.plot(times, profit975, color='green', label = 'upper bound')   
-plt.xlabel('Simulation Time (s)'); plt.ylabel('Profit ($)')
-plt.title('The variation of profit with time using 95% CI for 345 nodes')
+plt.xlabel('Simulation Time (s)'); plt.ylabel('Request Processing Success Rate')
+plt.title('The variation of success rate with time using 95% CI for 275 nodes')
 plt.legend()
 
